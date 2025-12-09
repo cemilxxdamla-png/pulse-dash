@@ -2,18 +2,12 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pulse Dash</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-.skin1{ background:cyan; }
-.skin2{ background:lime; border-radius:50%; }
-.skin3{ background:magenta; transform:rotate(45deg); box-shadow:0 0 12px magenta; }
-.skin4{ background:gold; box-shadow:0 0 18px gold; }
- :root{--neon:cyan}
 body{
  margin:0;
- background:#000;
+ background:black;
  display:flex;
  justify-content:center;
  align-items:center;
@@ -22,170 +16,176 @@ body{
  font-family:Arial;
 }
 #game{
+ width:700px;
+ height:320px;
+ border:4px solid cyan;
+ box-shadow:0 0 20px cyan;
  position:relative;
- width:800px;
- height:360px;
- border:4px solid var(--neon);
- box-shadow:0 0 30px var(--neon);
  overflow:hidden;
 }
 #ground{
  position:absolute;
  bottom:0;
  width:100%;
- height:50px;
- background:#111;
+ height:40px;
+ background:#222;
 }
 .player{
  position:absolute;
  left:120px;
- bottom:50px;
+ bottom:40px;
  width:30px;
  height:30px;
- background:cyan;
 }
+.skin1{background:cyan}
+.skin2{background:lime;border-radius:50%}
+.skin3{background:magenta;transform:rotate(45deg)}
+.skin4{background:gold;box-shadow:0 0 15px gold}
 .spike{
  position:absolute;
- bottom:50px;
+ bottom:40px;
  width:30px;
  height:30px;
  background:red;
  clip-path:polygon(50% 0,0 100%,100% 100%);
 }
-#menu{
+#menu,#shop{
  position:absolute;
  inset:0;
- background:rgba(0,0,0,.85);
+ background:rgba(0,0,0,.9);
  display:flex;
  flex-direction:column;
  justify-content:center;
  align-items:center;
- gap:20px;
+ gap:15px;
  z-index:10;
 }
 button{
- padding:12px 30px;
- font-size:20px;
+ padding:10px 25px;
+ font-size:18px;
  cursor:pointer;
 }
 #hud{
  position:absolute;
- top:10px;
- left:10px;
- font-size:16px;
+ top:5px;
+ left:5px;
+ font-size:14px;
 }
 </style>
 </head>
-
 <body>
+
 <div id="game">
  <div id="menu">
-  <h1>PULSE DASH</h1>
-  <button id="startBtn">▶ Başla</button>
+  <h2>PULSE DASH</h2>
+  <button id="btnStart">▶ Başla</button>
+  <button id="btnShop">🛍 Skin Market</button>
  </div>
-<div id="shop" style="display:none">
-  <h2>🛍 Skin Market</h2>
-  <button onclick="buySkin('skin1')">Skin 1 ✅</button>
-  <button onclick="buySkin('skin2')">Skin 2 ✅</button>
-  <button onclick="buySkin('skin3')">Skin 3 (20 skor)</button>
-  <button onclick="buySkin('skin4')">Skin 4 (100 skor)</button>
+
+ <div id="shop" style="display:none">
+  <h3>SKIN MARKET</h3>
+  <button onclick="buy('skin1')">Skin 1 ✅</button>
+  <button onclick="buy('skin2')">Skin 2 ✅</button>
+  <button onclick="buy('skin3')">Skin 3 (20 skor)</button>
+  <button onclick="buy('skin4')">Skin 4 (100 skor)</button>
   <button onclick="closeShop()">⬅ Geri</button>
-</div>
- <div id="hud">Skor: 0</div>
+ </div>
+
+ <div id="hud"></div>
  <div id="ground"></div>
 </div>
 
 <script>
-// ===== SESLER (GARANTİ ÇALIŞIR) =====
-const music = new Audio("music.mp3");
-music.loop = true;
-music.volume = 0.4;
+const game=document.getElementById("game");
+const menu=document.getElementById("menu");
+const shop=document.getElementById("shop");
+const hud=document.getElementById("hud");
 
-const jumpBase = new Audio("jump.wav");
-jumpBase.volume = 0.8;
-function playJump(){
- const s = jumpBase.cloneNode();
- s.play().catch(()=>{});
-}
-
-// ===== OYUN =====
-const game = document.getElementById("game");
-const menu = document.getElementById("menu");
-const hud  = document.getElementById("hud");
-
-let started=false;
-let y=50, vy=0;
-let jumping=false, canDouble=false;
-const gravity=0.7;
-let speed=6;
-let timer=0;
 let score=Number(localStorage.score||0);
-let spikes=[];
+let owned=JSON.parse(localStorage.owned||'["skin1","skin2"]');
+let skin=localStorage.skin||"skin1";
 
 const player=document.createElement("div");
-player.className="player";
+player.className="player "+skin;
 game.appendChild(player);
 
-// ===== BAŞLAT =====
-document.getElementById("startBtn").onclick=()=>{
+document.getElementById("btnStart").onclick=()=>{
  menu.style.display="none";
  started=true;
- music.play().catch(()=>{});
 };
 
-// ===== INPUT (TUŞLAR ÇALIŞIR) =====
+document.getElementById("btnShop").onclick=()=>{
+ menu.style.display="none";
+ shop.style.display="flex";
+};
+
+function closeShop(){
+ shop.style.display="none";
+ menu.style.display="flex";
+}
+
+function buy(s){
+ if(!owned.includes(s)){
+  if(s==="skin3" && score<20){alert("20 skor gerek");return;}
+  if(s==="skin4" && score<100){alert("100 skor gerek");return;}
+  owned.push(s);
+  localStorage.owned=JSON.stringify(owned);
+  alert("✅ Skin açıldı");
+ }
+ skin=s;
+ localStorage.skin=s;
+ player.className="player "+s;
+}
+
+let y=40,vy=0;
+let jumping=false,canDouble=false;
+let gravity=0.7;
+let started=false;
+let spikes=[];
+let t=0;
+
 function jump(){
  if(!started) return;
-
- playJump();
-
  if(!jumping){
-  vy=12;
-  jumping=true;
-  canDouble=true;
+  vy=12;jumping=true;canDouble=true;
  }else if(canDouble){
-  vy=12;
-  canDouble=false;
+  vy=12;canDouble=false;
  }
 }
 
 document.addEventListener("keydown",e=>{
- if(e.code==="Space"||e.key==="w"||e.key==="W") jump();
+ if(e.key===" "||e.key==="w") jump();
 });
-game.addEventListener("touchstart",jump);
+game.addEventListener("click",jump);
 
-// ===== SPIKE =====
-function spawnSpike(){
+function spawn(){
  const s=document.createElement("div");
  s.className="spike";
- s.x=820;
+ s.x=700;
  s.style.left=s.x+"px";
  game.appendChild(s);
  spikes.push(s);
 }
 
-// ===== LOOP =====
 function loop(){
  if(started){
-  vy -= gravity;
-  y += vy;
-  if(y<=50){y=50;vy=0;jumping=false;canDouble=false;}
+  vy-=gravity;
+  y+=vy;
+  if(y<=40){y=40;vy=0;jumping=false;canDouble=false}
   player.style.bottom=y+"px";
 
-  timer++;
-  if(timer>90){spawnSpike();timer=0;}
+  t++; if(t>90){spawn();t=0}
 
   spikes.forEach((s,i)=>{
-   s.x -= speed;
+   s.x-=6;
    s.style.left=s.x+"px";
-
-   const pr=player.getBoundingClientRect();
-   const sr=s.getBoundingClientRect();
+   let pr=player.getBoundingClientRect();
+   let sr=s.getBoundingClientRect();
    if(!(pr.right<sr.left||pr.left>sr.right||pr.bottom<sr.top)){
     alert("💀 GAME OVER");
     location.reload();
    }
-   if(s.x<-50){
+   if(s.x<-40){
     s.remove();
     spikes.splice(i,1);
     score++;
@@ -199,36 +199,5 @@ function loop(){
 }
 loop();
 </script>
-const shop = document.getElementById("shop");
-
-let ownedSkins = JSON.parse(localStorage.ownedSkins || '["skin1","skin2"]');
-let currentSkin = localStorage.currentSkin || "skin1";
-
-player.className = "player " + currentSkin;
-
-function openShop(){
- menu.style.display="none";
- shop.style.display="flex";
-}
-
-function closeShop(){
- shop.style.display="none";
- menu.style.display="flex";
-}
-
-function buySkin(s){
- if(!ownedSkins.includes(s)){
-  if(s==="skin3" && score < 20){ alert("20 skor gerek"); return; }
-  if(s==="skin4" && score < 100){ alert("100 skor gerek"); return; }
-
-  ownedSkins.push(s);
-  localStorage.ownedSkins = JSON.stringify(ownedSkins);
-  alert("🎉 Yeni skin açıldı!");
- }
-
- currentSkin = s;
- localStorage.currentSkin = s;
- player.className = "player " + s;
-}
- </body>
+</body>
 </html>
