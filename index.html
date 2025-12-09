@@ -6,7 +6,11 @@
 <title>Pulse Dash</title>
 
 <style>
-:root{--neon:cyan}
+.skin1{ background:cyan; }
+.skin2{ background:lime; border-radius:50%; }
+.skin3{ background:magenta; transform:rotate(45deg); box-shadow:0 0 12px magenta; }
+.skin4{ background:gold; box-shadow:0 0 18px gold; }
+ :root{--neon:cyan}
 body{
  margin:0;
  background:#000;
@@ -79,6 +83,14 @@ button{
   <h1>PULSE DASH</h1>
   <button id="startBtn">▶ Başla</button>
  </div>
+<div id="shop" style="display:none">
+  <h2>🛍 Skin Market</h2>
+  <button onclick="buySkin('skin1')">Skin 1 ✅</button>
+  <button onclick="buySkin('skin2')">Skin 2 ✅</button>
+  <button onclick="buySkin('skin3')">Skin 3 (20 skor)</button>
+  <button onclick="buySkin('skin4')">Skin 4 (100 skor)</button>
+  <button onclick="closeShop()">⬅ Geri</button>
+</div>
  <div id="hud">Skor: 0</div>
  <div id="ground"></div>
 </div>
@@ -187,5 +199,36 @@ function loop(){
 }
 loop();
 </script>
-</body>
+const shop = document.getElementById("shop");
+
+let ownedSkins = JSON.parse(localStorage.ownedSkins || '["skin1","skin2"]');
+let currentSkin = localStorage.currentSkin || "skin1";
+
+player.className = "player " + currentSkin;
+
+function openShop(){
+ menu.style.display="none";
+ shop.style.display="flex";
+}
+
+function closeShop(){
+ shop.style.display="none";
+ menu.style.display="flex";
+}
+
+function buySkin(s){
+ if(!ownedSkins.includes(s)){
+  if(s==="skin3" && score < 20){ alert("20 skor gerek"); return; }
+  if(s==="skin4" && score < 100){ alert("100 skor gerek"); return; }
+
+  ownedSkins.push(s);
+  localStorage.ownedSkins = JSON.stringify(ownedSkins);
+  alert("🎉 Yeni skin açıldı!");
+ }
+
+ currentSkin = s;
+ localStorage.currentSkin = s;
+ player.className = "player " + s;
+}
+ </body>
 </html>
